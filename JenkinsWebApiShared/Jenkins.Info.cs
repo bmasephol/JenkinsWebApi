@@ -158,7 +158,35 @@ namespace JenkinsWebApi
                 throw new ArgumentNullException(nameof(jobName));
             }
 
-            string str = await GetStringAsync($"job/{jobName}/api/xml", cancellationToken);
+            string path = $"job/{jobName}/api/xml";
+
+            return await GetJobByPathAsync(path, cancellationToken);
+        }
+
+        /// <summary>
+        /// Get the Jenkins job data.
+        /// </summary>
+        /// <param name="jobPath">Full path of the job</param>
+        /// <returns>Jenkins job data</returns>
+        public async Task<JenkinsModelAbstractItem> GetJobByPathAsync(string jobPath)
+        {
+            return await GetJobByPathAsync(jobPath, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Get the Jenkins job data.
+        /// </summary>
+        /// <param name="jobPath">Full path of the job</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <returns>Jenkins job data</returns>
+        public async Task<JenkinsModelAbstractItem> GetJobByPathAsync(string jobPath, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(jobPath))
+            {
+                throw new ArgumentNullException(nameof(jobPath));
+            }
+
+            string str = await GetStringAsync($"{jobPath}/api/xml", cancellationToken);
             JenkinsModelAbstractItem job = Deserialize<JenkinsModelAbstractItem>(str, jobTypes);
             return job;
         }
@@ -186,7 +214,35 @@ namespace JenkinsWebApi
                 throw new ArgumentNullException(nameof(viewName));
             }
 
-            string str = await GetStringAsync($"view/{viewName}/api/xml", cancellationToken);
+            string path = $"view/{viewName}/api/xml";
+
+            return await GetViewByPathAsync(path, cancellationToken);
+        }
+
+        /// <summary>
+        /// Get the Jenkins view data.
+        /// </summary>
+        /// <param name="viewName">Full path of the view</param>
+        /// <returns></returns>
+        public async Task<JenkinsModelView> GetViewByPathAsync(string viewPath)
+        {
+             return await GetViewByPathAsync(viewPath, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Get the Jenkins view data.
+        /// </summary>
+        /// <param name="viewName">Full path of the view</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <returns></returns>
+        public async Task<JenkinsModelView> GetViewByPathAsync(string viewPath, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(viewPath))
+            {
+                throw new ArgumentNullException(nameof(viewPath));
+            }
+
+            string str = await GetStringAsync($"{viewPath}/api/xml", cancellationToken);
             JenkinsModelView view = Deserialize<JenkinsModelView>(str, viewTypes);
             return view;
         }
@@ -216,7 +272,35 @@ namespace JenkinsWebApi
                 throw new ArgumentException(nameof(jobName));
             }
 
-            string str = await GetStringAsync($"job/{jobName}/{buildNum}/api/xml", cancellationToken);
+            string path = $"job/{jobName}/{buildNum}/api/xml";
+
+            return await GetBuildByPathAsync(path, cancellationToken);
+        }
+
+        /// <summary>
+        /// Get the Jenkins build data.
+        /// </summary>
+        /// <param name="jobPath">Full path of the Jenkins job</param>
+        /// <returns>Jenkins build data</returns>
+        public async Task<JenkinsModelRun> GetBuildByPathAsync(string jobPath)
+        {
+            return await GetBuildByPathAsync(jobPath, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Get the Jenkins build data.
+        /// </summary>
+        /// <param name="jobPath">Full path of the Jenkins job</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <returns>Jenkins build data</returns>
+        public async Task<JenkinsModelRun> GetBuildByPathAsync(string jobPath, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(jobPath))
+            {
+                throw new ArgumentException(nameof(jobPath));
+            }
+
+            string str = await GetStringAsync($"{jobPath}/api/xml", cancellationToken);
             JenkinsModelRun build = Deserialize<JenkinsModelRun>(str, buildTypes);
             return build;
         }
@@ -244,7 +328,35 @@ namespace JenkinsWebApi
                 throw new ArgumentException(nameof(jobName));
             }
 
-            string str = await GetStringAsync($"job/{jobName}/lastBuild/api/xml", cancellationToken);
+            string path = $"job/{jobName}/lastBuild";
+            
+            return await GetLastBuildByPathAsync(path, cancellationToken);
+        }
+
+        /// <summary>
+        /// Get the last build
+        /// </summary>
+        /// <param name="jobPath">Full path of the Jenkins job</param>
+        /// <returns>Jenkins build data</returns>
+        public async Task<JenkinsModelRun> GetLastBuildByPathAsync(string jobPath)
+        {
+            return await GetLastBuildByPathAsync(jobPath, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Get the last build
+        /// </summary>
+        /// <param name="jobPath">Full path of the Jenkins job</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <returns>Jenkins build data</returns>
+        public async Task<JenkinsModelRun> GetLastBuildByPathAsync(string jobPath, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(jobPath))
+            {
+                throw new ArgumentException(nameof(jobPath));
+            }
+
+            string str = await GetStringAsync($"{jobPath}/api/xml", cancellationToken);
             JenkinsModelRun build = Deserialize<JenkinsModelRun>(str, buildTypes);
             return build;
         }
@@ -274,7 +386,35 @@ namespace JenkinsWebApi
                 throw new ArgumentNullException(nameof(jobName));
             }
 
-            JenkinsTasksJunitTestResult report = await GetAsync<JenkinsTasksJunitTestResult>($"/job/{jobName}/{buildNum}/testReport/api/xml", cancellationToken);
+            string path = $"/job/{jobName}/{buildNum}/testReport";
+
+            return await GetTestReportByPathAsync(path, cancellationToken);
+        }
+
+        /// <summary>
+        /// Get the Jenkins build test report.
+        /// </summary>
+        /// <param name="jobPath">Full path of the Jenkins job</param>
+        /// <returns>Jenkins build test report if available; null if not</returns>
+        public async Task<JenkinsTasksJunitTestResult> GetTestReportByPathAsync(string jobPath)
+        {
+            return await GetTestReportByPathAsync(jobPath, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Get the Jenkins build test report.
+        /// </summary>
+        /// <param name="jobPath">Full path of the Jenkins job</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <returns>Jenkins build test report if available; null if not</returns>
+        public async Task<JenkinsTasksJunitTestResult> GetTestReportByPathAsync(string jobPath, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(jobPath))
+            {
+                throw new ArgumentNullException(nameof(jobPath));
+            }
+
+            JenkinsTasksJunitTestResult report = await GetAsync<JenkinsTasksJunitTestResult>($"{jobPath}/api/xml", cancellationToken);
             return report;
         }
 
