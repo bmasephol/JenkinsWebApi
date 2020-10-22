@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,17 +29,34 @@ namespace JenkinsWebApi
         private bool disposed = false;
         private const int udpPort = 33848;
 
-        private readonly static Type[] viewTypes = AppDomain.CurrentDomain.GetAssemblies()
-                                        .SelectMany(s => s.GetTypes())
-                                        .Where(t => typeof(JenkinsModelView).IsAssignableFrom(t) && t.IsClass && !t.IsGenericType && !t.IsAbstract)
-                                        .ToArray();
+        //private readonly static Type[] viewTypes = AppDomain.CurrentDomain.GetAssemblies()
+        //                                .SelectMany(s => s.GetTypes())
+        //                                .Where(t => typeof(JenkinsModelView).IsAssignableFrom(t) && t.IsClass && !t.IsGenericType && !t.IsAbstract)
+        //                                .ToArray();
 
-        private readonly static Type[] jobTypes = AppDomain.CurrentDomain.GetAssemblies()
+        //private readonly static Type[] jobTypes = AppDomain.CurrentDomain.GetAssemblies()
+        //                                .SelectMany(s => s.GetTypes())
+        //                                .Where(t => typeof(JenkinsModelJob).IsAssignableFrom(t) && t.IsClass && !t.IsGenericType && !t.IsAbstract)
+        //                                .ToArray();
+
+        //private readonly static Type[] buildTypes = AppDomain.CurrentDomain.GetAssemblies()
+        //                                .SelectMany(s => s.GetTypes())
+        //                                .Where(t => typeof(JenkinsModelRun).IsAssignableFrom(t) && t.IsClass && !t.IsGenericType && !t.IsAbstract)
+        //                                .ToArray();
+
+        private static List<Assembly> assemblies = new List<Assembly> { Assembly.GetExecutingAssembly() };
+
+        private readonly static Type[] viewTypes = assemblies
+                                .SelectMany(s => s.GetTypes())
+                                .Where(t => typeof(JenkinsModelView).IsAssignableFrom(t) && t.IsClass && !t.IsGenericType && !t.IsAbstract)
+                                .ToArray();
+
+        private readonly static Type[] jobTypes = assemblies
                                         .SelectMany(s => s.GetTypes())
                                         .Where(t => typeof(JenkinsModelJob).IsAssignableFrom(t) && t.IsClass && !t.IsGenericType && !t.IsAbstract)
                                         .ToArray();
 
-        private readonly static Type[] buildTypes = AppDomain.CurrentDomain.GetAssemblies()
+        private readonly static Type[] buildTypes = assemblies
                                         .SelectMany(s => s.GetTypes())
                                         .Where(t => typeof(JenkinsModelRun).IsAssignableFrom(t) && t.IsClass && !t.IsGenericType && !t.IsAbstract)
                                         .ToArray();
