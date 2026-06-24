@@ -196,6 +196,14 @@
             <param name="login">Login for the Jenkins server.</param>
             <param name="passwordOrToken">Password or API token for the Jenkins server.</param>
         </member>
+        <member name="M:JenkinsWebApi.Jenkins.#ctor(System.Net.Http.HttpClient,System.String)">
+            <summary>
+            Initializes a new instance of the Jenkins class.
+            </summary>
+            <param name="httpClient">HttpClient instance to be used by the Jenkins class.</param>
+            <param name="prependUrlPath">URL to be prepended to all API requests.</param>
+            <exception cref="T:System.ArgumentNullException"></exception>
+        </member>
         <member name="M:JenkinsWebApi.Jenkins.Login(System.String,System.String)">
             <summary>
             Login to the Jenkins server.

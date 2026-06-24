@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace JenkinsWebApi
 {
-    public sealed partial class Jenkins
+    public partial class Jenkins
     {
 
         /// <summary>

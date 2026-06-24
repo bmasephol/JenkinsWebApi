@@ -15,7 +15,7 @@ using System.Xml;
 
 namespace JenkinsWebApi
 {
-    public sealed partial class Jenkins
+    public partial class Jenkins
     {
         /// <summary>
         /// Get the Jenkins job data.

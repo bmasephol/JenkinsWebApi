@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace JenkinsWebApi
 {
-    public sealed partial class Jenkins
+    public partial class Jenkins
     {
         /// <summary>
         /// Enter into the "quiet down" mode.

@@ -12,7 +12,7 @@ using System.Xml.Serialization;
 
 namespace JenkinsWebApi
 {
-    public sealed partial class Jenkins
+    public partial class Jenkins
     {
         private const int udpPort = 33848;
 

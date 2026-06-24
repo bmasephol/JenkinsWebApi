@@ -2,8 +2,6 @@
 using JenkinsWebApi.Model;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -25,14 +23,12 @@ namespace JenkinsWebApi
     {
         private const string apiFormat = JenkinsDeserializer.ApiFormat;
 
-
         private HttpClientHandler handler;
-        private HttpClient client;
 
         /// <summary>
         /// 
         /// </summary>
-        private Uri BaseAddress { get { return this.client.BaseAddress; } }
+        private Uri BaseAddress { get { return this.httpClient.BaseAddress; } }
 
         private void Connect(Uri host, string login, string passwordOrToken)
         {
@@ -47,30 +43,31 @@ namespace JenkinsWebApi
                 UseCookies = true,
                 CookieContainer = new System.Net.CookieContainer()
             };
-            this.client = new HttpClient(this.handler)
-            {
-                BaseAddress = host
-            };
 
-            // set authorization
-            if (!string.IsNullOrEmpty(login) && !string.IsNullOrEmpty(passwordOrToken))
+            if (this.httpClient == null)
             {
-                Authorize(login, passwordOrToken);
-                //this.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes($"{login}:{passwordOrToken}")));
+                this.httpClient = new HttpClient(this.handler)
+                {
+                    BaseAddress = host
+                };
 
-                //Crumb();
-            }
-            else
-            {
-                // needed for anonymus but ignore Forbidden for later login
-                Crumb(true);
+                // set authorization
+                if (!string.IsNullOrEmpty(login) && !string.IsNullOrEmpty(passwordOrToken))
+                {
+                    Authorize(login, passwordOrToken);
+                }
+                else
+                {
+                    // needed for anonymus but ignore Forbidden for later login
+                    Crumb(true);
+                }
             }
         }
 
         private void Authorize(string login, string passwordOrToken)
         {
             // set authorization
-            this.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes($"{login}:{passwordOrToken}")));
+            this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes($"{login}:{passwordOrToken}")));
 
             // set crumb
             Crumb();
@@ -87,7 +84,7 @@ namespace JenkinsWebApi
             JenkinsSecurityCsrfDefaultCrumbIssuer crumb = GetApiAsync<JenkinsSecurityCsrfDefaultCrumbIssuer>("crumbIssuer", ignoreList, CancellationToken.None).Result;
             if (crumb != null)
             {
-                this.client.DefaultRequestHeaders.Add(crumb.CrumbRequestField, crumb.Crumb);
+                this.httpClient.DefaultRequestHeaders.Add(crumb.CrumbRequestField, crumb.Crumb);
             }
         }
 
@@ -96,11 +93,12 @@ namespace JenkinsWebApi
         /// </summary>
         public void Dispose()
         {
-            if (this.client != null)
+            if (this.httpClient != null)
             {
-                this.client.Dispose();
-                this.client = null;
+                this.httpClient.Dispose();
+                this.httpClient = null;
             }
+
             if (this.handler != null)
             {
                 this.handler.Dispose();
@@ -108,9 +106,23 @@ namespace JenkinsWebApi
             }
         }
 
+        private string GetFormattedPath(string path)
+        {
+            string finalPath = string.Empty;
+
+            if (!string.IsNullOrEmpty(prependUrlPath))
+            {
+                finalPath = prependUrlPath;
+            }
+
+            finalPath += path + apiFormat;
+
+            return finalPath;
+        }
+
         private async Task<T> GetApiAsync<T>(string path, CancellationToken cancellationToken) where T : class
         {
-            using (HttpResponseMessage response = await this.client.GetAsync(path + apiFormat, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.GetAsync(this.GetFormattedPath(path), cancellationToken))
             {
                 response.EnsureSuccess();
                 T value = await response.Content.ReadAsAsync<T>(cancellationToken);
@@ -120,7 +132,7 @@ namespace JenkinsWebApi
 
         private async Task<T> GetApiViewAsync<T>(string path, CancellationToken cancellationToken) where T : JenkinsModelView
         {
-            using (HttpResponseMessage response = await this.client.GetAsync(path + apiFormat, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.GetAsync(this.GetFormattedPath(path), cancellationToken))
             {
                 response.EnsureSuccess();
                 T value = await response.Content.ReadAsViewAsync<T>(cancellationToken);
@@ -130,7 +142,7 @@ namespace JenkinsWebApi
 
         private async Task<T> GetApiJobAsync<T>(string path, CancellationToken cancellationToken) where T : JenkinsModelAbstractItem
         {
-            using (HttpResponseMessage response = await this.client.GetAsync(path + apiFormat, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.GetAsync(this.GetFormattedPath(path), cancellationToken))
             {
                 response.EnsureSuccess();
                 T value = await response.Content.ReadAsJobAsync<T>(cancellationToken);
@@ -140,7 +152,7 @@ namespace JenkinsWebApi
 
         private async Task<T> GetApiBuildAsync<T>(string path, CancellationToken cancellationToken) where T : JenkinsModelRun
         {
-            using (HttpResponseMessage response = await this.client.GetAsync(path + apiFormat, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.GetAsync(this.GetFormattedPath(path), cancellationToken))
             {
                 response.EnsureSuccess();
                 T value = await response.Content.ReadAsBuildAsync<T>(cancellationToken);
@@ -150,7 +162,7 @@ namespace JenkinsWebApi
 
         private async Task<T> GetApiAsync<T>(string path, HttpStatusCode ignoreStatusCode, CancellationToken cancellationToken) where T : class
         {
-            using (HttpResponseMessage response = await this.client.GetAsync(path + apiFormat, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.GetAsync(this.GetFormattedPath(path), cancellationToken))
             {
                 response.EnsureSuccess(ignoreStatusCode);
                 T value = await response.Content.ReadAsAsync<T>(cancellationToken);
@@ -158,12 +170,12 @@ namespace JenkinsWebApi
             }
         }
 
-        
+
         private async Task<T> GetApiAsync<T>(string path, IEnumerable<HttpStatusCode> ignoreStatusCodes, CancellationToken cancellationToken) where T : class
         {
-            using (HttpResponseMessage response = await this.client.GetAsync(path + apiFormat, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.GetAsync(this.GetFormattedPath(path), cancellationToken))
             {
-                
+
                 response.EnsureSuccess(ignoreStatusCodes);
                 T value = response.StatusCode == HttpStatusCode.OK ? await response.Content.ReadAsAsync<T>(cancellationToken) : null;
                 return value;
@@ -172,7 +184,7 @@ namespace JenkinsWebApi
 
         private async Task<string> GetApiStringAsync(string path, CancellationToken cancellationToken)
         {
-            using (HttpResponseMessage response = await this.client.GetAsync(path + apiFormat, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.GetAsync(this.GetFormattedPath(path), cancellationToken))
             {
                 response.EnsureSuccess();
                 string str = await response.Content.ReadAsStringAsync(
@@ -186,7 +198,7 @@ namespace JenkinsWebApi
 
         private async Task<string> GetStringAsync(string path, CancellationToken cancellationToken)
         {
-            using (HttpResponseMessage response = await this.client.GetAsync(path, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.GetAsync(path, cancellationToken))
             {
                 response.EnsureSuccess();
                 string str = await response.Content.ReadAsStringAsync(
@@ -200,7 +212,7 @@ namespace JenkinsWebApi
 
         private async Task PostAsync(string path, CancellationToken cancellationToken)
         {
-            using (HttpResponseMessage response = await this.client.PostAsync(path, null, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.PostAsync(path, null, cancellationToken))
             {
                 string str = await response.Content.ReadAsStringAsync(
 #if NET
@@ -213,7 +225,7 @@ namespace JenkinsWebApi
 
         private async Task PostAsync(string path, HttpStatusCode ignoreStatusCode, CancellationToken cancellationToken)
         {
-            using (HttpResponseMessage response = await this.client.PostAsync(path, null, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.PostAsync(path, null, cancellationToken))
             {
                 string str = await response.Content.ReadAsStringAsync(
 #if NET
@@ -229,7 +241,7 @@ namespace JenkinsWebApi
         // FormUrlEncodedContent for application/x-www-form-urlencoded
         private async Task PostAsync(string path, HttpContent content, CancellationToken cancellationToken)
         {
-            using (HttpResponseMessage response = await this.client.PostAsync(path, content, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.PostAsync(path, content, cancellationToken))
             {
                 response.EnsureSuccess();
             }
@@ -237,7 +249,7 @@ namespace JenkinsWebApi
 
         private async Task PostAsync(string path, IEnumerable<KeyValuePair<string, string>> content, CancellationToken cancellationToken)
         {
-            using (HttpResponseMessage response = await this.client.PostAsync(path, new FormUrlEncodedContent(content), cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.PostAsync(path, new FormUrlEncodedContent(content), cancellationToken))
             {
                 response.EnsureSuccess();
             }
@@ -245,7 +257,7 @@ namespace JenkinsWebApi
 
         private async Task<string> PostResAsync(string path, IEnumerable<KeyValuePair<string, string>> content, CancellationToken cancellationToken)
         {
-            using (HttpResponseMessage response = await this.client.PostAsync(path, new FormUrlEncodedContent(content), cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.PostAsync(path, new FormUrlEncodedContent(content), cancellationToken))
             {
                 response.EnsureSuccess();
                 string str = await response.Content.ReadAsStringAsync(
@@ -256,10 +268,10 @@ namespace JenkinsWebApi
                 return str;
             }
         }
-        
+
         private async Task<PostRunRes> PostRunJobAsync(string path, HttpContent content, CancellationToken cancellationToken)
         {
-            using (HttpResponseMessage response = await this.client.PostAsync(path, content, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.PostAsync(path, content, cancellationToken))
             {
                 if (response.StatusCode != HttpStatusCode.Conflict)
                 {
@@ -272,7 +284,7 @@ namespace JenkinsWebApi
 
         private async Task DeleteAsync(string path, CancellationToken cancellationToken)
         {
-            using (HttpResponseMessage response = await this.client.DeleteAsync(path, cancellationToken))
+            using (HttpResponseMessage response = await this.httpClient.DeleteAsync(path, cancellationToken))
             {
                 response.EnsureSuccess();
             }
